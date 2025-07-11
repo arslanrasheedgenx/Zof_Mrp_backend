@@ -135,6 +135,7 @@ export class ProductsService {
         .leftJoin('productcategory', 'category', 'category.Id = product.ProductCategoryId')
         .leftJoin('Client', 'client', 'client.Id = product.ClientId')
         .select([
+          'product.Id AS Id',
           'product.Name AS Name',
           'product.ProductCategoryId AS ProductCategoryId',
           'category.Type AS ProductCategoryName',
@@ -153,7 +154,7 @@ export class ProductsService {
           'product.UpdatedBy AS UpdatedBy'
         ])
         .getRawMany();
-
+      
       return products.map(product => ({
         Id: product?.Id,
         Name: product?.Name,
