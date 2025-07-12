@@ -8,7 +8,7 @@ import {
   Req,
   ParseIntPipe,
   HttpStatus,
-  HttpCode
+  HttpCode,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-orders.dto';
@@ -19,16 +19,18 @@ import { ControllerAuthProtector } from 'src/common/decorators/controller-auth-p
 import { ApiBody } from '@nestjs/swagger';
 import { OrderStatusLogs } from './entities/order-status-log';
 
-
 @ControllerAuthProtector('Orders', 'orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) { }
+  constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
   @ApiBody({ type: CreateOrderDto })
   @HttpCode(HttpStatus.CREATED)
   @CommonApiResponses('Create a new order')
-  async create(@Body() createOrderDto: CreateOrderDto, @CurrentUser() currentUser: any): Promise<any> {
+  async create(
+    @Body() createOrderDto: CreateOrderDto,
+    @CurrentUser() currentUser: any,
+  ): Promise<any> {
     try {
       return this.ordersService.createOrder(createOrderDto, currentUser.email);
     } catch (error) {
@@ -68,7 +70,7 @@ export class OrdersController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateOrderDto: UpdateOrderDto,
-    @Req() req
+    @Req() req,
   ): Promise<any> {
     try {
       const userId = req.user.id;
@@ -78,6 +80,17 @@ export class OrdersController {
       throw error;
     }
   }
+
+  @Post(':id/reorder')
+@HttpCode(HttpStatus.CREATED)
+@CommonApiResponses('Reorders an existing order by ID')
+async reorderOrder(
+  @Param('id', ParseIntPipe) id: number,
+  @CurrentUser() currentUser: any
+): Promise<any> {
+  return this.ordersService.reorder(id, currentUser.email);
+}
+
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -94,7 +107,9 @@ export class OrdersController {
   @Get('order-status-log/:id')
   @HttpCode(HttpStatus.OK)
   @CommonApiResponses('Get order status log by order id')
-  async getOrderStatusLog(@Param('id', ParseIntPipe) orderId: number): Promise<Omit<OrderStatusLogs, 'Id' | 'UpdatedOn'>[]> {
+  async getOrderStatusLog(
+    @Param('id', ParseIntPipe) orderId: number,
+  ): Promise<Omit<OrderStatusLogs, 'Id' | 'UpdatedOn'>[]> {
     try {
       return this.ordersService.getOrderStatusLog(orderId);
     } catch (error) {
@@ -106,7 +121,9 @@ export class OrdersController {
   @Get('items/:id')
   @HttpCode(HttpStatus.OK)
   @CommonApiResponses('Get order items by order id')
-  async getOrderItems(@Param('id', ParseIntPipe) orderId: number): Promise<any> {
+  async getOrderItems(
+    @Param('id', ParseIntPipe) orderId: number,
+  ): Promise<any> {
     try {
       return this.ordersService.getOrderItemsByOrderId(orderId);
     } catch (error) {
@@ -118,7 +135,9 @@ export class OrdersController {
   @Get('get-edit/:id')
   @HttpCode(HttpStatus.OK)
   @CommonApiResponses('Get edit order by id')
-  async getOrdersEdit(@Param('id', ParseIntPipe) orderId: number): Promise<any> {
+  async getOrdersEdit(
+    @Param('id', ParseIntPipe) orderId: number,
+  ): Promise<any> {
     try {
       return this.ordersService.getEditOrder(orderId);
     } catch (error) {
@@ -132,7 +151,7 @@ export class OrdersController {
   @CommonApiResponses('Update order status by id using DELETE route')
   async updateStatusViaDelete(
     @Param('id', ParseIntPipe) id: number,
-    @Param('statusId', ParseIntPipe) statusId: number
+    @Param('statusId', ParseIntPipe) statusId: number,
   ): Promise<void> {
     try {
       await this.ordersService.updateOrderStatus(id, statusId);
@@ -141,5 +160,4 @@ export class OrdersController {
       throw error;
     }
   }
-
 }
